@@ -177,4 +177,19 @@ function runTest(){
         worker.postMessage("Shiraishi");
         fakeworker.uninstall();
     });
+    /*
+    test("misc", function() {
+        eval("var a = 1");
+        alert(a);
+        with(window) {
+            eval("var b = 2");
+        }
+        alert(window.b);
+        var scope = new function(){};
+        with(scope) {
+            eval("var c = 3");
+        }
+        alert(scope.c);
+    });
+    */
 }

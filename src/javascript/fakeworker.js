@@ -1,8 +1,5 @@
 ;
 var fakeworker = (function(global){
-    function getXhr(){
-        return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
-    }
     function extend(dest, src){
         for (var i in src) {
             dest[i] = src[i];
@@ -36,8 +33,8 @@ var fakeworker = (function(global){
     };
     // <<<<<<<<<<<<<<<<<<<<
     
-    function syncXhrGet(url, fn){
-        var xhr = getXhr();
+    function __syncXhrGet(url, fn){
+        var xhr = window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
         // sync request
         xhr.open("GET", url, false);
         xhr.onreadystatechange = function(){
@@ -152,7 +149,7 @@ var fakeworker = (function(global){
         this._listenerNamespaces = {}; // event listeners
         this._eventQueues = {};
         
-        syncXhrGet(url, function(xhr){
+        __syncXhrGet(url, function(xhr){
             try {
                 self._workerContext = new FakeWorkerContext(url, xhr.responseText, self);
             } 
@@ -252,6 +249,7 @@ var fakeworker = (function(global){
             return this.href;
         }
     };
+    
     function FakeWorkerContext(url, source, worker){
         var postMessage = this.postMessage = function(msg){
             var event = new FakeMessageEvent(worker);
@@ -278,11 +276,30 @@ var fakeworker = (function(global){
             this.closing = true
             // not yet implemented
         };
-        var importScripts = this.importScripts = function(){
-        
-        };
         var navigator = this.navigator = global.navigator;
         var self = this.self = this;
+        var importScripts = this.importScripts = function(){
+            /*
+            if (index == scriptUrls.length) {
+                return;
+            }
+            var importFunc = arguments.callee;
+            __syncXhrGet(scriptUrls[index], function(xhr){
+                with(self) {
+                    eval(xhr.responseText);
+                }
+                importFunc(scriptUrls, index + 1);
+            });
+            */
+           for (var i = 0; i < arguments.length; i++) {
+               __syncXhrGet(arguments[i], function(xhr) {
+                   with(global)
+                       eval(xhr.responseText);
+               });
+           }
+        }
+        //var __importScriptsSource = "(function(__global){" + __syncXhrGet.toString() + ";importScripts=" + __importScripts.toString() + "})(this);";
+        //eval(__importScriptsSource + source);
         // execute worker
         eval(source);
         
