@@ -37,22 +37,30 @@ var fakeworker = (function(global){
         var xhr = window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
         // sync request
         xhr.open("GET", url, false);
-        xhr.onreadystatechange = function(){
-            if (xhr.readyState == 4) {
-                if (httpSuccess(xhr)) {
-                    try {
-                        fn(xhr);
-                    } 
-                    catch (e) {
-                        throw e;
-                    }
-                }
-                else {
-                    throw new Error("Could not load resource(" + url + ") result=" + xhr.status + ":" + xhr.statusText);
-                }
-            }
-        };
+        /*
+         xhr.onreadystatechange = function(){
+         if (xhr.readyState == 4) {
+         if (httpSuccess(xhr)) {
+         try {
+         fn(xhr);
+         }
+         catch (e) {
+         throw e;
+         }
+         }
+         else {
+         throw new Error("Could not load resource(" + url + ") result=" + xhr.status + ":" + xhr.statusText);
+         }
+         }
+         };
+         */
         xhr.send("");
+        if (httpSuccess(xhr)) {
+            fn(xhr);
+        }
+        else {
+            throw new Error("Could not load resource(" + url + ") result=" + xhr.status + ":" + xhr.statusText);
+        }
     }
     
     // >>>>>>>>>> this part is copied from parseUri 1.2.2
@@ -218,7 +226,7 @@ var fakeworker = (function(global){
                     } 
                     catch (e) {
                         var errorEvent = new FakeErrorEvent(self);
-                        var lineno = e.line; // webkit
+                        var lineno = e.line || e.lineNumber;
                         errorEvent.initErrorEvent("error", false, false, e.message, workerContext.location.filename, lineno);
                         self.dispatchEvent(errorEvent);
                         throw e;
@@ -280,23 +288,13 @@ var fakeworker = (function(global){
         var self = this.self = this;
         var importScripts = this.importScripts = function(){
             /*
-            if (index == scriptUrls.length) {
-                return;
+            for (var i = 0; i < arguments.length; i++) {
+                __syncXhrGet(arguments[i], function(xhr){
+                    with (global) eval(xhr.responseText);
+                });
             }
-            var importFunc = arguments.callee;
-            __syncXhrGet(scriptUrls[index], function(xhr){
-                with(self) {
-                    eval(xhr.responseText);
-                }
-                importFunc(scriptUrls, index + 1);
-            });
             */
-           for (var i = 0; i < arguments.length; i++) {
-               __syncXhrGet(arguments[i], function(xhr) {
-                   with(global)
-                       eval(xhr.responseText);
-               });
-           }
+           throw new Error("importScripts is not supported.");
         }
         //var __importScriptsSource = "(function(__global){" + __syncXhrGet.toString() + ";importScripts=" + __importScripts.toString() + "})(this);";
         //eval(__importScriptsSource + source);
